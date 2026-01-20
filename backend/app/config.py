@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24  # 24 hours
 
+    # Cookie
+    cookie_secure: bool = False  # Set to True in production (HTTPS)
+    cookie_samesite: str = "lax"  # Use "none" for cross-origin (ngrok)
+
     # Google Cloud Storage
     gcs_bucket_name: str = "screendeck-media"
     gcs_project_id: str = ""

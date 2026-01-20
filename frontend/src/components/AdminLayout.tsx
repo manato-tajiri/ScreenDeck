@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,8 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
+import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
 
 const navigation = [
   { name: "ダッシュボード", href: "/admin/dashboard", icon: LayoutDashboard },
@@ -32,27 +32,12 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isAuthenticated, logout } = useAuthStore();
+  const { user, clearUser } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      router.push("/login");
-    } else if (user?.role !== "admin") {
-      router.push("/staff/devices");
-    }
-  }, [isAuthenticated, user, router]);
-
-  if (!isAuthenticated || user?.role !== "admin") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await api.logout();
+    clearUser();
     router.push("/login");
   };
 

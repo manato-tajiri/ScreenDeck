@@ -26,8 +26,10 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/screendeck
       SECRET_KEY: dev-secret-key-change-in-production
-      CORS_ORIGINS: '["http://localhost:3000", "https://9be74ceac73a.ngrok-free.app"]'
-      FRONTEND_URL: https://9be74ceac73a.ngrok-free.app
+      CORS_ORIGINS: '["http://localhost:3000"]'
+      FRONTEND_URL: http://localhost:3000
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: "lax"
       GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-screendeck-media}
       GCS_PROJECT_ID: ${GCS_PROJECT_ID:-}
       GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
@@ -45,7 +47,9 @@ services:
     container_name: screendeck-frontend
     working_dir: /app
     environment:
-      NEXT_PUBLIC_API_URL: https://1541fae9d55b.ngrok-free.app
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      API_URL: http://backend:8000
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
     ports:
       - "3000:3000"
     depends_on:
