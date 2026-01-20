@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
     const backendResponse = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "ngrok-skip-browser-warning": "true",
       },
     });
 

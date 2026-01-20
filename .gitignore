@@ -17,9 +17,6 @@ Thumbs.db
 # Logs
 *.log
 
-# ngrok config (contains authtoken)
-ngrok.yml
-
 # ===== Backend (Python) =====
 # Python
 __pycache__/

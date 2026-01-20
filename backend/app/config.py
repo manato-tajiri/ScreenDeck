@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     # Cookie
     cookie_secure: bool = False  # Set to True in production (HTTPS)
-    cookie_samesite: str = "lax"  # Use "none" for cross-origin (ngrok)
+    cookie_samesite: str = "lax"  # Use "none" for cross-origin in production
 
     # Google Cloud Storage
     gcs_bucket_name: str = "screendeck-media"
