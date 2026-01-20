@@ -1,0 +1,60 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: screendeck-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: screendeck
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: screendeck-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/screendeck
+      SECRET_KEY: dev-secret-key-change-in-production
+      CORS_ORIGINS: '["http://localhost:3000", "https://9be74ceac73a.ngrok-free.app"]'
+      FRONTEND_URL: https://9be74ceac73a.ngrok-free.app
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME:-screendeck-media}
+      GCS_PROJECT_ID: ${GCS_PROJECT_ID:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    image: node:20-alpine
+    container_name: screendeck-frontend
+    working_dir: /app
+    environment:
+      NEXT_PUBLIC_API_URL: https://1541fae9d55b.ngrok-free.app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev"
+
+volumes:
+  postgres_data:
+  frontend_node_modules:
