@@ -89,3 +89,7 @@ storybook-static/
 # Don't ignore docker-compose.yml as it's needed for development
 # But ignore any local overrides
 docker-compose.override.yml
+
+# ===== Media Storage =====
+# Uploaded media files (local development)
+media/

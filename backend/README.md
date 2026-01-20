@@ -281,8 +281,10 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
 
 ## テスト
 
+> **Note**: テストは未実装です。将来的に追加予定。
+
 ```bash
-# テスト実行
+# tests/ ディレクトリを作成してテストを追加後
 pytest
 
 # カバレッジ付き
