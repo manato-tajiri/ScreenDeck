@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { Suspense, useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import {
@@ -18,7 +18,18 @@ const SYNC_INTERVAL = 15 * 60 * 1000; // 15 minutes
 const LOG_SYNC_INTERVAL = 60 * 1000; // 1 minute
 const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
-export default function PlayerPage() {
+function LoadingScreen() {
+  return (
+    <div className="fixed inset-0 bg-black flex items-center justify-center">
+      <div className="text-white text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <p>読み込み中...</p>
+      </div>
+    </div>
+  );
+}
+
+function PlayerContent() {
   const searchParams = useSearchParams();
   const deviceId = searchParams.get("device_id");
 
@@ -243,5 +254,13 @@ export default function PlayerPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function PlayerPage() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <PlayerContent />
+    </Suspense>
   );
 }
