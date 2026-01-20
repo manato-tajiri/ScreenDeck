@@ -10,7 +10,7 @@ from app.models.media import Media, MediaType
 from app.models.user import User
 from app.schemas.media import MediaUpdate, MediaResponse
 from app.dependencies import get_current_admin
-from app.utils.gcs import upload_file_to_gcs, generate_signed_url, delete_file_from_gcs
+from app.utils.storage import upload_file, get_file_url, delete_file
 
 router = APIRouter(tags=["media"])
 
@@ -36,9 +36,9 @@ async def list_campaign_media(
         Media.campaign_id == campaign_id
     ).order_by(Media.sort_order).all()
 
-    # Generate fresh signed URLs
+    # Generate fresh URLs
     for item in media_items:
-        item.gcs_url = generate_signed_url(item.gcs_path)
+        item.gcs_url = get_file_url(item.gcs_path)
 
     return media_items
 
@@ -85,10 +85,10 @@ async def upload_media(
     unique_filename = f"{uuid.uuid4().hex}.{file_extension}"
     gcs_path = f"campaigns/{campaign_id}/{unique_filename}"
 
-    # Upload to GCS
+    # Upload to storage
     try:
-        full_gcs_path = upload_file_to_gcs(file_content, gcs_path, content_type)
-        signed_url = generate_signed_url(full_gcs_path)
+        storage_path = upload_file(file_content, gcs_path, content_type)
+        file_url = get_file_url(storage_path)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -105,8 +105,8 @@ async def upload_media(
         campaign_id=campaign_id,
         type=media_type,
         filename=file.filename,
-        gcs_path=full_gcs_path,
-        gcs_url=signed_url,
+        gcs_path=storage_path,
+        gcs_url=file_url,
         duration_seconds=duration_seconds,
         file_size=file_size,
         mime_type=content_type,
@@ -132,8 +132,8 @@ async def get_media(
             detail="Media not found",
         )
 
-    # Generate fresh signed URL
-    media.gcs_url = generate_signed_url(media.gcs_path)
+    # Generate fresh URL
+    media.gcs_url = get_file_url(media.gcs_path)
     return media
 
 
@@ -159,8 +159,8 @@ async def update_media(
     db.commit()
     db.refresh(media)
 
-    # Generate fresh signed URL
-    media.gcs_url = generate_signed_url(media.gcs_path)
+    # Generate fresh URL
+    media.gcs_url = get_file_url(media.gcs_path)
     return media
 
 
@@ -177,11 +177,11 @@ async def delete_media(
             detail="Media not found",
         )
 
-    # Delete from GCS
+    # Delete from storage
     try:
-        delete_file_from_gcs(media.gcs_path)
+        delete_file(media.gcs_path)
     except Exception:
-        pass  # Continue even if GCS delete fails
+        pass  # Continue even if storage delete fails
 
     db.delete(media)
     db.commit()

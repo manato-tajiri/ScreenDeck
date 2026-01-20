@@ -14,7 +14,7 @@ from app.models.media import Media
 from app.models.playback_log import PlaybackLog
 from app.schemas.playlist import PlaylistResponse, PlaylistItem
 from app.schemas.playback_log import PlaybackLogCreate
-from app.utils.gcs import generate_signed_url
+from app.utils.storage import get_file_url
 
 router = APIRouter(prefix="/player", tags=["player"])
 
@@ -86,13 +86,13 @@ async def get_playlist(
         ).order_by(Media.sort_order).all()
 
         for media in media_items:
-            # Generate fresh signed URL
-            signed_url = generate_signed_url(media.gcs_path)
+            # Generate fresh URL
+            media_url = get_file_url(media.gcs_path)
 
             playlist_items.append(PlaylistItem(
                 media_id=media.id,
                 campaign_id=campaign.id,
-                url=signed_url,
+                url=media_url,
                 type=media.type,
                 duration_seconds=media.duration_seconds,
                 filename=media.filename,

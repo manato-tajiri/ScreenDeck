@@ -20,7 +20,12 @@ class Settings(BaseSettings):
     cookie_secure: bool = False  # Set to True in production (HTTPS)
     cookie_samesite: str = "lax"  # Use "none" for cross-origin in production
 
-    # Google Cloud Storage
+    # Storage
+    use_local_storage: bool = True  # Use local storage for development
+    local_storage_path: str = "/app/media"  # Path for local file storage
+    media_base_url: str = "http://localhost:8000/media"  # Base URL for media files
+
+    # Google Cloud Storage (used when use_local_storage is False)
     gcs_bucket_name: str = "screendeck-media"
     gcs_project_id: str = ""
     google_application_credentials: str = ""
