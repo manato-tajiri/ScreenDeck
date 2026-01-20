@@ -11,6 +11,8 @@ import {
   markLogsSynced,
   cachePlaylistMedia,
   getMediaUrl,
+  getDeviceIdentity,
+  saveDeviceIdentity,
 } from "@/lib/storage";
 import type { Playlist, PlaylistItem, PlaybackLogCreate } from "@/types";
 
@@ -20,10 +22,10 @@ const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 function LoadingScreen() {
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center">
+    <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
       <div className="text-white text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-        <p>読み込み中...</p>
+        <div className="loading-spinner h-12 w-12 mx-auto mb-4" />
+        <p className="text-gray-400">読み込み中...</p>
       </div>
     </div>
   );
@@ -128,12 +130,42 @@ function PlayerContent() {
     setCurrentIndex((prev) => (prev + 1) % playlist.items.length);
   }, [playlist]);
 
+  // Migrate existing device to IndexedDB (for devices registered before this feature)
+  const migrateDeviceIdentity = useCallback(async () => {
+    if (!deviceId) return;
+
+    try {
+      const existingIdentity = await getDeviceIdentity();
+      // Only migrate if no identity exists or if the device ID doesn't match
+      if (!existingIdentity || existingIdentity.deviceId !== deviceId) {
+        // Fetch device info from server
+        try {
+          const device = await api.getDevicePublic(deviceId);
+          await saveDeviceIdentity({
+            deviceId: device.id,
+            deviceCode: device.device_code,
+            areaId: device.area_id,
+            registeredAt: device.registered_at,
+          });
+          console.log("Device identity migrated to IndexedDB");
+        } catch (err) {
+          console.error("Failed to migrate device identity", err);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to check device identity", err);
+    }
+  }, [deviceId]);
+
   // Initialize
   useEffect(() => {
     if (!deviceId) {
       setError("device_id パラメータが必要です");
       return;
     }
+
+    // Migrate device identity if needed
+    migrateDeviceIdentity();
 
     // Initial sync
     syncPlaylist();
@@ -156,7 +188,7 @@ function PlayerContent() {
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
     };
-  }, [deviceId, syncPlaylist, syncLogs, sendHeartbeat]);
+  }, [deviceId, syncPlaylist, syncLogs, sendHeartbeat, migrateDeviceIdentity]);
 
   // Handle current item changes
   useEffect(() => {
@@ -199,9 +231,12 @@ function PlayerContent() {
 
   if (error) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <p className="text-xl mb-4">エラー</p>
+      <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+            <span className="text-3xl">!</span>
+          </div>
+          <p className="text-xl text-white mb-2">エラー</p>
           <p className="text-gray-400">{error}</p>
         </div>
       </div>
@@ -210,12 +245,12 @@ function PlayerContent() {
 
   if (!playlist || playlist.items.length === 0) {
     return (
-      <div className="fixed inset-0 bg-black flex items-center justify-center">
-        <div className="text-white text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-          <p>コンテンツを読み込み中...</p>
+      <div className="fixed inset-0 bg-dark-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-spinner h-12 w-12 mx-auto mb-4" />
+          <p className="text-white">コンテンツを読み込み中...</p>
           {!isOnline && (
-            <p className="text-yellow-500 mt-2">オフラインモード</p>
+            <p className="text-neon-gold mt-2">オフラインモード</p>
           )}
         </div>
       </div>
@@ -225,10 +260,10 @@ function PlayerContent() {
   const currentItem = playlist.items[currentIndex];
 
   return (
-    <div className="fixed inset-0 bg-black">
+    <div className="fixed inset-0 bg-dark-950">
       {/* Status indicator */}
       {!isOnline && (
-        <div className="absolute top-4 right-4 z-10 px-3 py-1 bg-yellow-500 text-black text-sm rounded">
+        <div className="absolute top-4 right-4 z-10 px-4 py-2 bg-neon-gold/20 text-neon-gold text-sm rounded-full border border-neon-gold/30 backdrop-blur-sm">
           オフライン
         </div>
       )}

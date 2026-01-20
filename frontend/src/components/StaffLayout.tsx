@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
-import { Monitor, QrCode, LogOut } from "lucide-react";
+import { Monitor, QrCode, LogOut, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/lib/store";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -28,14 +28,22 @@ export default function StaffLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-dark-950">
+      {/* Background mesh gradient */}
+      <div className="fixed inset-0 bg-mesh-pattern pointer-events-none" />
+
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className="relative border-b border-dark-700/50 bg-dark-900/80 backdrop-blur-xl sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-bold text-primary-600">ScreenDeck</h1>
-              <nav className="ml-8 flex space-x-4">
+              <Link href="/staff/devices" className="flex items-center space-x-3">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-neon-magenta to-neon-cyan flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                <h1 className="text-xl font-bold text-white">ScreenDeck</h1>
+              </Link>
+              <nav className="ml-8 flex space-x-2">
                 {navigation.map((item) => {
                   const isActive = pathname.startsWith(item.href);
                   return (
@@ -43,13 +51,16 @@ export default function StaffLayout({
                       key={item.name}
                       href={item.href}
                       className={cn(
-                        "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                        "flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200",
                         isActive
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-gray-700 hover:bg-gray-100"
+                          ? "bg-neon-magenta/20 text-neon-magenta border border-neon-magenta/30"
+                          : "text-gray-400 hover:text-white hover:bg-dark-700/50"
                       )}
                     >
-                      <item.icon className="h-4 w-4 mr-2" />
+                      <item.icon className={cn(
+                        "h-4 w-4 mr-2",
+                        isActive ? "text-neon-magenta" : ""
+                      )} />
                       {item.name}
                     </Link>
                   );
@@ -57,10 +68,10 @@ export default function StaffLayout({
               </nav>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{user?.name}</span>
+              <span className="text-sm text-gray-400">{user?.name}</span>
               <button
                 onClick={handleLogout}
-                className="flex items-center text-gray-600 hover:text-gray-900"
+                className="icon-btn"
               >
                 <LogOut className="h-5 w-5" />
               </button>
@@ -70,7 +81,7 @@ export default function StaffLayout({
       </header>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 py-6">{children}</main>
+      <main className="relative max-w-7xl mx-auto px-4 py-6">{children}</main>
     </div>
   );
 }

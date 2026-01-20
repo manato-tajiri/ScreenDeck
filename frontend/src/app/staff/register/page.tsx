@@ -101,7 +101,7 @@ function RegisterContent() {
   if (isLoadingArea) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="loading-spinner h-10 w-10" />
       </div>
     );
   }
@@ -110,32 +110,34 @@ function RegisterContent() {
   const isQRMode = !!areaId;
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 p-4">
+    <div className="max-w-lg mx-auto space-y-6">
       <div className="flex items-center">
-        <QrCode className="h-8 w-8 text-primary-600 mr-3" />
-        <h1 className="text-2xl font-bold text-gray-900">端末登録</h1>
+        <QrCode className="h-8 w-8 text-neon-cyan mr-3" />
+        <h1 className="text-2xl font-bold text-white">端末登録</h1>
       </div>
 
       {registeredDevice ? (
         <div className="card p-6">
           <div className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            <div className="w-20 h-20 rounded-full bg-neon-green/20 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="h-12 w-12 text-neon-green" />
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-2">
               登録完了
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-400 mb-4">
               端末が正常に登録されました
             </p>
-            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <div className="bg-dark-700/50 rounded-xl p-4 mb-6 border border-dark-600">
               <p className="text-sm text-gray-500 mb-1">端末コード</p>
-              <p className="text-2xl font-mono font-bold text-primary-600">
+              <p className="text-2xl font-mono font-bold text-neon-cyan">
                 {registeredDevice.device_code}
               </p>
             </div>
 
             <button
               onClick={goToPlayer}
-              className="btn btn-primary w-full mb-3"
+              className="btn btn-primary w-full mb-4"
             >
               <Monitor className="h-4 w-4 mr-2" />
               プレイヤー画面を開く
@@ -144,7 +146,7 @@ function RegisterContent() {
             <p className="text-sm text-gray-500 mb-4">
               または以下のURLをブックマーク:
               <br />
-              <code className="bg-gray-100 px-2 py-1 rounded text-xs block mt-2 break-all">
+              <code className="bg-dark-700 px-2 py-1 rounded text-xs text-neon-cyan block mt-2 break-all">
                 {typeof window !== "undefined" ? window.location.origin : ""}/player?device_id={registeredDevice.id}
               </code>
             </p>
@@ -159,16 +161,16 @@ function RegisterContent() {
       ) : (
         <div className="card p-6">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
 
           {isQRMode && areaInfo && (
-            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-600">登録先エリア</p>
-              <p className="text-lg font-semibold text-blue-900">{areaInfo.name}</p>
-              <p className="text-sm text-blue-700">コード: {areaInfo.code}</p>
+            <div className="mb-6 bg-neon-cyan/10 border border-neon-cyan/30 rounded-xl p-4">
+              <p className="text-sm text-neon-cyan">登録先エリア</p>
+              <p className="text-lg font-semibold text-white">{areaInfo.name}</p>
+              <p className="text-sm text-gray-400">コード: {areaInfo.code}</p>
             </div>
           )}
 
@@ -201,7 +203,7 @@ function RegisterContent() {
                 onChange={(e) => setDeviceCode(e.target.value)}
                 placeholder="空欄の場合は自動生成"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-2">
                 任意の識別コードを入力できます（例: TABLET-001）
               </p>
             </div>
@@ -217,9 +219,9 @@ function RegisterContent() {
         </div>
       )}
 
-      <div className="card p-4 bg-blue-50 border-blue-200">
-        <h3 className="font-medium text-blue-900 mb-2">使い方</h3>
-        <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+      <div className="card p-4 border-neon-purple/30 bg-neon-purple/5">
+        <h3 className="font-medium text-white mb-2">使い方</h3>
+        <ol className="text-sm text-gray-400 space-y-1 list-decimal list-inside">
           <li>エリアのQRコードをスキャンすると自動でエリアが選択されます</li>
           <li>端末コードは空欄にすると自動で生成されます</li>
           <li>登録後に「プレイヤー画面を開く」ボタンを押してください</li>
@@ -233,7 +235,7 @@ export default function RegisterPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="loading-spinner h-10 w-10" />
       </div>
     }>
       <RegisterContent />

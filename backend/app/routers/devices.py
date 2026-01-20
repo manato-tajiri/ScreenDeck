@@ -230,3 +230,51 @@ async def delete_device(
 
     db.delete(device)
     db.commit()
+
+
+@router.get("/{device_id}/public", response_model=DeviceResponse)
+async def get_device_public(
+    device_id: UUID,
+    db: Session = Depends(get_db),
+):
+    """Public endpoint to verify if a device exists (no authentication required).
+    Used by the registration page to check if a locally stored device ID is still valid.
+    """
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found",
+        )
+
+    return device
+
+
+@router.put("/{device_id}/area/qr", response_model=DeviceResponse)
+async def update_device_area_via_qr(
+    device_id: UUID,
+    area_id: UUID = Query(...),
+    db: Session = Depends(get_db),
+):
+    """Public endpoint to move a device to a new area via QR code scan (no authentication required).
+    Used when a device scans a QR code for a different area than currently registered.
+    """
+    device = db.query(Device).filter(Device.id == device_id).first()
+    if not device:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Device not found",
+        )
+
+    # Check new area exists and is active
+    new_area = db.query(Area).filter(Area.id == area_id, Area.is_active == True).first()
+    if not new_area:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Area not found or inactive",
+        )
+
+    device.area_id = area_id
+    db.commit()
+    db.refresh(device)
+    return device

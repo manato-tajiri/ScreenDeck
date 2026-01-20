@@ -4,7 +4,29 @@ import { useEffect, useState } from "react";
 import { Plus, Trash2, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Device, Store, Area } from "@/types";
-import { formatDateTime, getStatusColor, getStatusText } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case "online":
+      return "badge-success";
+    case "offline":
+      return "badge-danger";
+    default:
+      return "badge-default";
+  }
+}
+
+function getStatusText(status: string) {
+  switch (status) {
+    case "online":
+      return "オンライン";
+    case "offline":
+      return "オフライン";
+    default:
+      return "不明";
+  }
+}
 
 export default function DevicesPage() {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -79,9 +101,12 @@ export default function DevicesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">端末管理</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">端末管理</h1>
+          <p className="text-gray-400 mt-1">デバイスの状態を監視・管理</p>
+        </div>
         <button onClick={() => setShowModal(true)} className="btn btn-primary">
           <Plus className="h-4 w-4 mr-2" />
           端末を登録
@@ -138,7 +163,7 @@ export default function DevicesPage() {
       <div className="card">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="loading-spinner h-8 w-8" />
           </div>
         ) : (
           <div className="table-container">
@@ -153,32 +178,28 @@ export default function DevicesPage() {
                   <th></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-dark-600">
                 {devices.map((device) => (
                   <tr key={device.id}>
-                    <td className="font-mono">{device.device_code}</td>
+                    <td className="font-mono text-neon-cyan">{device.device_code}</td>
                     <td>{device.name || "-"}</td>
                     <td>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-                          device.status
-                        )}`}
-                      >
+                      <span className={`badge ${getStatusBadgeClass(device.status)}`}>
                         {getStatusText(device.status)}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-gray-400">
                       {device.last_sync_at
                         ? formatDateTime(device.last_sync_at)
                         : "-"}
                     </td>
-                    <td>{formatDateTime(device.registered_at)}</td>
+                    <td className="text-gray-400">{formatDateTime(device.registered_at)}</td>
                     <td>
                       <button
                         onClick={() => handleDeleteDevice(device.id)}
-                        className="p-2 hover:bg-gray-100 rounded"
+                        className="icon-btn icon-btn-danger"
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </td>
                   </tr>
@@ -263,15 +284,16 @@ function RegisterDeviceModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-md mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             端末を登録
           </h2>
-
+        </div>
+        <div className="modal-body">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -322,24 +344,23 @@ function RegisterDeviceModal({
                 placeholder="空欄の場合は自動生成"
               />
             </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !selectedArea}
-                className="btn btn-primary"
-              >
-                {isLoading ? "登録中..." : "登録"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !selectedArea}
+            className="btn btn-primary"
+          >
+            {isLoading ? "登録中..." : "登録"}
+          </button>
         </div>
       </div>
     </div>

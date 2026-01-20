@@ -91,15 +91,18 @@ export default function CampaignsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="loading-spinner h-10 w-10" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">キャンペーン管理</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">キャンペーン管理</h1>
+          <p className="text-gray-400 mt-1">広告コンテンツの配信を管理</p>
+        </div>
         <button
           onClick={() => {
             setEditingCampaign(null);
@@ -114,19 +117,19 @@ export default function CampaignsPage() {
 
       <div className="space-y-4">
         {campaigns.map((campaign) => (
-          <div key={campaign.id} className="card">
+          <div key={campaign.id} className="card card-hover">
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-dark-700/30 transition-colors rounded-t-2xl"
               onClick={() => toggleCampaign(campaign.id)}
             >
               <div className="flex items-center">
                 {expandedCampaigns.has(campaign.id) ? (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-neon-magenta" />
                 ) : (
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <ChevronRight className="h-5 w-5 text-gray-500" />
                 )}
                 <div className="ml-3">
-                  <h3 className="font-medium text-gray-900">{campaign.name}</h3>
+                  <h3 className="font-medium text-white">{campaign.name}</h3>
                   <p className="text-sm text-gray-500">
                     {formatDate(campaign.start_date)} 〜 {formatDate(campaign.end_date)}
                     {" | "}重み: {campaign.weight}
@@ -135,10 +138,10 @@ export default function CampaignsPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <span
-                  className={`px-2 py-1 text-xs rounded-full ${
+                  className={`badge ${
                     campaign.is_active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
+                      ? "badge-success"
+                      : "badge-default"
                   }`}
                 >
                   {campaign.is_active ? "有効" : "無効"}
@@ -149,10 +152,10 @@ export default function CampaignsPage() {
                     setSelectedCampaign(campaign);
                     setShowAreaModal(true);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="icon-btn"
                   title="配信エリア設定"
                 >
-                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <MapPin className="h-4 w-4" />
                 </button>
                 <button
                   onClick={(e) => {
@@ -160,26 +163,26 @@ export default function CampaignsPage() {
                     setEditingCampaign(campaign);
                     setShowCampaignModal(true);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="icon-btn"
                 >
-                  <Pencil className="h-4 w-4 text-gray-500" />
+                  <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteCampaign(campaign.id);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="icon-btn icon-btn-danger"
                 >
-                  <Trash2 className="h-4 w-4 text-red-500" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {expandedCampaigns.has(campaign.id) && (
-              <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <div className="border-t border-dark-600 p-4 bg-dark-800/30 rounded-b-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-700">メディア一覧</h4>
+                  <h4 className="font-medium text-gray-300">メディア一覧</h4>
                   <button
                     onClick={() => {
                       setSelectedCampaign(campaign);
@@ -199,9 +202,9 @@ export default function CampaignsPage() {
                     {campaignMedia[campaign.id]?.map((media) => (
                       <div
                         key={media.id}
-                        className="bg-white rounded border border-gray-200 overflow-hidden"
+                        className="bg-dark-700/50 rounded-xl border border-dark-600 overflow-hidden hover:border-dark-500 transition-colors"
                       >
-                        <div className="aspect-video bg-gray-100 flex items-center justify-center">
+                        <div className="aspect-video bg-dark-800 flex items-center justify-center">
                           {media.type === "image" ? (
                             media.gcs_url ? (
                               <img
@@ -210,14 +213,14 @@ export default function CampaignsPage() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <Image className="h-12 w-12 text-gray-400" />
+                              <Image className="h-12 w-12 text-gray-600" />
                             )
                           ) : (
-                            <Video className="h-12 w-12 text-gray-400" />
+                            <Video className="h-12 w-12 text-gray-600" />
                           )}
                         </div>
                         <div className="p-3">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-white truncate">
                             {media.filename}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -231,7 +234,7 @@ export default function CampaignsPage() {
                               onClick={() =>
                                 handleDeleteMedia(media.id, campaign.id)
                               }
-                              className="text-red-500 hover:text-red-700 text-sm"
+                              className="text-red-400 hover:text-red-300 text-sm transition-colors"
                             >
                               削除
                             </button>
@@ -340,15 +343,16 @@ function CampaignModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-lg mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             {campaign ? "キャンペーンを編集" : "キャンペーンを作成"}
           </h2>
-
+        </div>
+        <div className="modal-body">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -421,31 +425,30 @@ function CampaignModal({
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 rounded border-gray-300"
+                  className="checkbox"
                 />
-                <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="isActive" className="ml-2 text-sm text-gray-300">
                   有効
                 </label>
               </div>
             )}
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary"
-              >
-                {isLoading ? "保存中..." : "保存"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="btn btn-primary"
+          >
+            {isLoading ? "保存中..." : "保存"}
+          </button>
         </div>
       </div>
     </div>
@@ -484,15 +487,16 @@ function MediaUploadModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-md mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             メディアをアップロード
           </h2>
-
+        </div>
+        <div className="modal-body">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -504,10 +508,10 @@ function MediaUploadModal({
                 type="file"
                 required
                 accept="image/*,video/*"
-                className="input"
+                className="input file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-dark-600 file:text-gray-300 hover:file:bg-dark-500"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-2">
                 画像: JPG, PNG, GIF, WebP / 動画: MP4, WebM
               </p>
             </div>
@@ -523,28 +527,27 @@ function MediaUploadModal({
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value) || 10)}
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-2">
                 画像の表示時間、または動画の場合は無視されます
               </p>
             </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !file}
-                className="btn btn-primary"
-              >
-                {isLoading ? "アップロード中..." : "アップロード"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading || !file}
+            className="btn btn-primary"
+          >
+            {isLoading ? "アップロード中..." : "アップロード"}
+          </button>
         </div>
       </div>
     </div>
@@ -629,10 +632,10 @@ function AreaAssignmentModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-2xl mx-4 max-h-[80vh] overflow-hidden flex flex-col">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             配信エリア設定: {campaign.name}
           </h2>
         </div>
@@ -640,7 +643,7 @@ function AreaAssignmentModal({
         <div className="flex-1 overflow-y-auto p-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <div className="loading-spinner h-8 w-8" />
             </div>
           ) : (
             <div className="space-y-4">
@@ -653,37 +656,37 @@ function AreaAssignmentModal({
                   areas.length > 0 && selectedCount === areas.length;
 
                 return (
-                  <div key={store.id} className="border border-gray-200 rounded-lg">
+                  <div key={store.id} className="border border-dark-600 rounded-xl overflow-hidden">
                     <div
-                      className="flex items-center p-3 bg-gray-50 cursor-pointer"
+                      className="flex items-center p-4 bg-dark-700/50 cursor-pointer hover:bg-dark-700 transition-colors"
                       onClick={() => toggleStore(store.id)}
                     >
                       <input
                         type="checkbox"
                         checked={allSelected}
                         onChange={() => toggleStore(store.id)}
-                        className="h-4 w-4 text-primary-600 rounded border-gray-300"
+                        className="checkbox"
                       />
-                      <span className="ml-3 font-medium text-gray-900">
+                      <span className="ml-3 font-medium text-white">
                         {store.name}
                       </span>
                       <span className="ml-2 text-sm text-gray-500">
                         ({selectedCount}/{areas.length} エリア選択中)
                       </span>
                     </div>
-                    <div className="p-3 grid grid-cols-2 md:grid-cols-3 gap-2">
+                    <div className="p-4 grid grid-cols-2 md:grid-cols-3 gap-2 bg-dark-800/30">
                       {areas.map((area) => (
                         <label
                           key={area.id}
-                          className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          className="flex items-center p-2 hover:bg-dark-700/50 rounded-lg cursor-pointer transition-colors"
                         >
                           <input
                             type="checkbox"
                             checked={selectedAreas.has(area.id)}
                             onChange={() => toggleArea(area.id)}
-                            className="h-4 w-4 text-primary-600 rounded border-gray-300"
+                            className="checkbox"
                           />
-                          <span className="ml-2 text-sm text-gray-700">
+                          <span className="ml-2 text-sm text-gray-300">
                             {area.name}
                           </span>
                         </label>
@@ -696,7 +699,7 @@ function AreaAssignmentModal({
           )}
         </div>
 
-        <div className="p-6 border-t border-gray-200 flex justify-end space-x-3">
+        <div className="modal-footer">
           <button onClick={onClose} className="btn btn-secondary">
             キャンセル
           </button>

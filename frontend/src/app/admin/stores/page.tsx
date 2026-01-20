@@ -113,15 +113,18 @@ export default function StoresPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="loading-spinner h-10 w-10" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">店舗管理</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">店舗管理</h1>
+          <p className="text-gray-400 mt-1">店舗とエリアを一元管理</p>
+        </div>
         <button
           onClick={() => {
             setEditingStore(null);
@@ -136,28 +139,28 @@ export default function StoresPage() {
 
       <div className="space-y-4">
         {stores.map((store) => (
-          <div key={store.id} className="card">
+          <div key={store.id} className="card card-hover">
             <div
-              className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50"
+              className="flex items-center justify-between p-4 cursor-pointer hover:bg-dark-700/30 transition-colors rounded-t-2xl"
               onClick={() => toggleStore(store.id)}
             >
               <div className="flex items-center">
                 {expandedStores.has(store.id) ? (
-                  <ChevronDown className="h-5 w-5 text-gray-400" />
+                  <ChevronDown className="h-5 w-5 text-neon-magenta" />
                 ) : (
-                  <ChevronRight className="h-5 w-5 text-gray-400" />
+                  <ChevronRight className="h-5 w-5 text-gray-500" />
                 )}
                 <div className="ml-3">
-                  <h3 className="font-medium text-gray-900">{store.name}</h3>
+                  <h3 className="font-medium text-white">{store.name}</h3>
                   <p className="text-sm text-gray-500">コード: {store.code}</p>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
                 <span
-                  className={`px-2 py-1 text-xs rounded-full ${
+                  className={`badge ${
                     store.is_active
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
+                      ? "badge-success"
+                      : "badge-default"
                   }`}
                 >
                   {store.is_active ? "有効" : "無効"}
@@ -168,27 +171,27 @@ export default function StoresPage() {
                     setEditingStore(store);
                     setShowStoreModal(true);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="icon-btn"
                 >
-                  <Pencil className="h-4 w-4 text-gray-500" />
+                  <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteStore(store.id);
                   }}
-                  className="p-2 hover:bg-gray-100 rounded"
+                  className="icon-btn icon-btn-danger"
                 >
-                  <Trash2 className="h-4 w-4 text-red-500" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
 
             {expandedStores.has(store.id) && (
-              <div className="border-t border-gray-200 p-4 bg-gray-50">
+              <div className="border-t border-dark-600 p-4 bg-dark-800/30 rounded-b-2xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-700 flex items-center">
-                    <MapPin className="h-4 w-4 mr-2" />
+                  <h4 className="font-medium text-gray-300 flex items-center">
+                    <MapPin className="h-4 w-4 mr-2 text-neon-cyan" />
                     エリア一覧
                   </h4>
                   <button
@@ -211,10 +214,10 @@ export default function StoresPage() {
                     {storeAreas[store.id]?.map((area) => (
                       <div
                         key={area.id}
-                        className="flex items-center justify-between bg-white p-3 rounded border border-gray-200"
+                        className="flex items-center justify-between bg-dark-700/50 p-3 rounded-xl border border-dark-600 hover:border-dark-500 transition-colors"
                       >
                         <div>
-                          <p className="font-medium text-gray-900">{area.name}</p>
+                          <p className="font-medium text-white">{area.name}</p>
                           <p className="text-sm text-gray-500">
                             コード: {area.code}
                           </p>
@@ -222,10 +225,10 @@ export default function StoresPage() {
                         <div className="flex items-center space-x-2">
                           <button
                             onClick={() => handleShowQR(area.id, area.name)}
-                            className="p-2 hover:bg-gray-100 rounded"
+                            className="icon-btn"
                             title="QRコードを表示"
                           >
-                            <QrCode className="h-4 w-4 text-gray-500" />
+                            <QrCode className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => {
@@ -233,15 +236,15 @@ export default function StoresPage() {
                               setEditingArea(area);
                               setShowAreaModal(true);
                             }}
-                            className="p-2 hover:bg-gray-100 rounded"
+                            className="icon-btn"
                           >
-                            <Pencil className="h-4 w-4 text-gray-500" />
+                            <Pencil className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteArea(area.id)}
-                            className="p-2 hover:bg-gray-100 rounded"
+                            className="icon-btn icon-btn-danger"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </div>
@@ -287,50 +290,50 @@ export default function StoresPage() {
 
       {/* QR Code Modal */}
       {showQRModal && qrCodeData && (
-        <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  QRコード - {qrCodeData.areaName}
-                </h2>
-                <button
-                  onClick={handleCloseQRModal}
-                  className="p-1 hover:bg-gray-100 rounded"
-                >
-                  <X className="h-5 w-5 text-gray-500" />
-                </button>
-              </div>
+        <div className="modal-backdrop">
+          <div className="modal-content w-full max-w-md mx-4">
+            <div className="modal-header flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">
+                QRコード - {qrCodeData.areaName}
+              </h2>
+              <button
+                onClick={handleCloseQRModal}
+                className="icon-btn"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
+            <div className="modal-body">
               <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                <div className="bg-white p-6 rounded-xl">
                   <img
                     src={qrCodeData.url}
                     alt={`QRコード - ${qrCodeData.areaName}`}
                     className="w-64 h-64"
                   />
                 </div>
-                <p className="mt-4 text-sm text-gray-500 text-center">
+                <p className="mt-4 text-sm text-gray-400 text-center">
                   このQRコードをタブレットで読み取ると、<br />
                   デバイス登録ページが開きます。
                 </p>
               </div>
+            </div>
 
-              <div className="flex justify-center space-x-3 mt-6">
-                <button
-                  onClick={handleDownloadQR}
-                  className="btn btn-primary"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  ダウンロード
-                </button>
-                <button
-                  onClick={handleCloseQRModal}
-                  className="btn btn-secondary"
-                >
-                  閉じる
-                </button>
-              </div>
+            <div className="modal-footer justify-center">
+              <button
+                onClick={handleDownloadQR}
+                className="btn btn-primary"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                ダウンロード
+              </button>
+              <button
+                onClick={handleCloseQRModal}
+                className="btn btn-secondary"
+              >
+                閉じる
+              </button>
             </div>
           </div>
         </div>
@@ -374,15 +377,16 @@ function StoreModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-md mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             {store ? "店舗を編集" : "店舗を追加"}
           </h2>
-
+        </div>
+        <div className="modal-body">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -425,23 +429,23 @@ function StoreModal({
               </div>
             )}
 
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary"
-              >
-                {isLoading ? "保存中..." : "保存"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="btn btn-primary"
+          >
+            {isLoading ? "保存中..." : "保存"}
+          </button>
         </div>
       </div>
     </div>
@@ -485,15 +489,16 @@ function AreaModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-md mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             {area ? "エリアを編集" : "エリアを追加"}
           </h2>
-
+        </div>
+        <div className="modal-body">
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -530,31 +535,30 @@ function AreaModal({
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 rounded border-gray-300"
+                  className="checkbox"
                 />
-                <label htmlFor="isActive" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="isActive" className="ml-2 text-sm text-gray-300">
                   有効
                 </label>
               </div>
             )}
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary"
-              >
-                {isLoading ? "保存中..." : "保存"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="btn btn-primary"
+          >
+            {isLoading ? "保存中..." : "保存"}
+          </button>
         </div>
       </div>
     </div>

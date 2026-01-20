@@ -5,7 +5,29 @@ import { RefreshCw, ArrowRight } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Device, Area } from "@/types";
 import { useAuthStore } from "@/lib/store";
-import { formatDateTime, getStatusColor, getStatusText } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
+
+function getStatusBadgeClass(status: string) {
+  switch (status) {
+    case "online":
+      return "badge-success";
+    case "offline":
+      return "badge-danger";
+    default:
+      return "badge-default";
+  }
+}
+
+function getStatusText(status: string) {
+  switch (status) {
+    case "online":
+      return "オンライン";
+    case "offline":
+      return "オフライン";
+    default:
+      return "不明";
+  }
+}
 
 export default function StaffDevicesPage() {
   const { user } = useAuthStore();
@@ -44,9 +66,12 @@ export default function StaffDevicesPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">端末一覧</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-white">端末一覧</h1>
+          <p className="text-gray-400 mt-1">担当店舗の端末を管理</p>
+        </div>
         <button onClick={loadData} className="btn btn-secondary">
           <RefreshCw className="h-4 w-4 mr-2" />
           更新
@@ -56,7 +81,7 @@ export default function StaffDevicesPage() {
       <div className="card">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="loading-spinner h-8 w-8" />
           </div>
         ) : (
           <div className="table-container">
@@ -71,22 +96,18 @@ export default function StaffDevicesPage() {
                   <th></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-dark-600">
                 {devices.map((device) => (
                   <tr key={device.id}>
-                    <td className="font-mono">{device.device_code}</td>
+                    <td className="font-mono text-neon-cyan">{device.device_code}</td>
                     <td>{device.name || "-"}</td>
-                    <td>{getAreaName(device.area_id)}</td>
+                    <td className="text-gray-400">{getAreaName(device.area_id)}</td>
                     <td>
-                      <span
-                        className={`px-2 py-1 text-xs rounded-full ${getStatusColor(
-                          device.status
-                        )}`}
-                      >
+                      <span className={`badge ${getStatusBadgeClass(device.status)}`}>
                         {getStatusText(device.status)}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-gray-400">
                       {device.last_sync_at
                         ? formatDateTime(device.last_sync_at)
                         : "-"}
@@ -165,19 +186,20 @@ function MoveDeviceModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-        <div className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="modal-backdrop">
+      <div className="modal-content w-full max-w-md mx-4">
+        <div className="modal-header">
+          <h2 className="text-lg font-semibold text-white">
             端末をエリア移動
           </h2>
-
-          <p className="text-sm text-gray-600 mb-4">
-            端末: <span className="font-mono">{device.device_code}</span>
+        </div>
+        <div className="modal-body">
+          <p className="text-sm text-gray-400 mb-4">
+            端末: <span className="font-mono text-neon-cyan">{device.device_code}</span>
           </p>
 
           {error && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            <div className="mb-4 bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl text-sm">
               {error}
             </div>
           )}
@@ -198,24 +220,23 @@ function MoveDeviceModal({
                 ))}
               </select>
             </div>
-
-            <div className="flex justify-end space-x-3 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn btn-secondary"
-              >
-                キャンセル
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="btn btn-primary"
-              >
-                {isLoading ? "移動中..." : "移動"}
-              </button>
-            </div>
           </form>
+        </div>
+        <div className="modal-footer">
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn btn-secondary"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="btn btn-primary"
+          >
+            {isLoading ? "移動中..." : "移動"}
+          </button>
         </div>
       </div>
     </div>
