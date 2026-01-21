@@ -13,7 +13,10 @@ import {
   getMediaUrl,
   getDeviceIdentity,
   saveDeviceIdentity,
+  savePlaybackPosition,
+  getPlaybackPosition,
 } from "@/lib/storage";
+import type { PlaybackPosition } from "@/lib/storage";
 import type { Playlist, PlaylistItem, PlaybackLogCreate } from "@/types";
 
 const SYNC_INTERVAL = 15 * 60 * 1000; // 15 minutes
@@ -40,8 +43,60 @@ function PlayerContent() {
   const [currentUrl, setCurrentUrl] = useState<string>("");
   const [isOnline, setIsOnline] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Restore playback position from saved state
+  const restorePlaybackPosition = useCallback(
+    async (newPlaylist: Playlist): Promise<number> => {
+      try {
+        const savedPosition = await getPlaybackPosition();
+
+        if (!savedPosition) {
+          return 0; // No saved position, start from beginning
+        }
+
+        // If same playlist version, use saved index directly
+        if (savedPosition.playlistVersion === newPlaylist.version) {
+          return Math.min(savedPosition.currentIndex, newPlaylist.items.length - 1);
+        }
+
+        // Different version - try to find the media by ID
+        const foundIndex = newPlaylist.items.findIndex(
+          (item) => item.media_id === savedPosition.currentMediaId
+        );
+
+        return foundIndex >= 0 ? foundIndex : 0;
+      } catch (err) {
+        console.error("Failed to restore playback position", err);
+        return 0;
+      }
+    },
+    []
+  );
+
+  // Save current playback position
+  const persistPlaybackPosition = useCallback(
+    async (index: number, playlistData: Playlist) => {
+      if (!playlistData || playlistData.items.length === 0) return;
+
+      const currentItem = playlistData.items[index];
+      if (!currentItem) return;
+
+      try {
+        await savePlaybackPosition({
+          currentIndex: index,
+          currentMediaId: currentItem.media_id,
+          playlistVersion: playlistData.version,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.error("Failed to save playback position", err);
+      }
+    },
+    []
+  );
 
   // Sync playlist from server
   const syncPlaylist = useCallback(async () => {
@@ -49,7 +104,14 @@ function PlayerContent() {
 
     try {
       const newPlaylist = await api.getPlaylist(deviceId);
+
+      // Restore position if this is initial load or playlist changed
+      const restoredIndex = await restorePlaybackPosition(newPlaylist);
+
       setPlaylist(newPlaylist);
+      setCurrentIndex(restoredIndex);
+      setIsInitialized(true);
+
       await savePlaylist(newPlaylist);
 
       // Cache media files
@@ -64,12 +126,15 @@ function PlayerContent() {
       // Try to load from cache
       const cached = await getPlaylist();
       if (cached) {
+        const restoredIndex = await restorePlaybackPosition(cached);
         setPlaylist(cached);
+        setCurrentIndex(restoredIndex);
+        setIsInitialized(true);
       } else {
         setError("プレイリストの取得に失敗しました");
       }
     }
-  }, [deviceId]);
+  }, [deviceId, restorePlaybackPosition]);
 
   // Sync playback logs
   const syncLogs = useCallback(async () => {
@@ -200,6 +265,11 @@ function PlayerContent() {
     // Log playback
     logPlayback(currentItem);
 
+    // Save playback position (only after initialization to avoid overwriting with 0)
+    if (isInitialized) {
+      persistPlaybackPosition(currentIndex, playlist);
+    }
+
     // Get media URL (from cache or original)
     const loadMedia = async () => {
       const url = await getMediaUrl(currentItem.url);
@@ -222,7 +292,7 @@ function PlayerContent() {
         clearTimeout(timerRef.current);
       }
     };
-  }, [playlist, currentIndex, logPlayback, playNext]);
+  }, [playlist, currentIndex, logPlayback, playNext, isInitialized, persistPlaybackPosition]);
 
   // Handle video ended
   const handleVideoEnded = () => {

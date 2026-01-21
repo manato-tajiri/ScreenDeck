@@ -11,6 +11,7 @@ class Campaign(Base):
     __tablename__ = "campaigns"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    store_id = Column(UUID(as_uuid=True), ForeignKey("stores.id"), nullable=False)
     name = Column(String(255), nullable=False)
     description = Column(Text, nullable=True)
     weight = Column(Integer, default=1, nullable=False)  # 1-100
@@ -21,6 +22,7 @@ class Campaign(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
+    store = relationship("Store", back_populates="campaigns")
     media = relationship("Media", back_populates="campaign", cascade="all, delete-orphan")
     campaign_areas = relationship("CampaignArea", back_populates="campaign", cascade="all, delete-orphan")
     playback_logs = relationship("PlaybackLog", back_populates="campaign")

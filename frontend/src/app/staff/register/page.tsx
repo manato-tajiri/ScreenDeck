@@ -11,7 +11,8 @@ function RegisterContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const areaId = searchParams.get("area_id");
-  const { user, isAuthenticated } = useAuthStore();
+  const { user } = useAuthStore();
+  const isAuthenticated = !!user;
 
   const [areas, setAreas] = useState<Area[]>([]);
   const [selectedArea, setSelectedArea] = useState(areaId || "");

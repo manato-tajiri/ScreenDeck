@@ -1,21 +1,126 @@
 import io
 import base64
-from typing import List
+from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import date
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.responses import Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, or_
 import qrcode
 
 from app.database import get_db
 from app.models.store import Store
 from app.models.area import Area
+from app.models.campaign import Campaign, CampaignArea
 from app.models.user import User
-from app.schemas.area import AreaCreate, AreaUpdate, AreaResponse
+from app.schemas.area import (
+    AreaCreate, AreaUpdate, AreaResponse,
+    AreaCampaignAssignment, AreaCampaignAssignmentResponse, CampaignInfo
+)
 from app.dependencies import get_current_admin
 from app.config import settings
 
 router = APIRouter(tags=["areas"])
+
+
+@router.get("/areas/campaign-assignments", response_model=AreaCampaignAssignmentResponse)
+async def get_area_campaign_assignments(
+    store_id: Optional[UUID] = Query(None, description="店舗IDでフィルタ"),
+    start_date: Optional[date] = Query(None, description="チェック対象の開始日"),
+    end_date: Optional[date] = Query(None, description="チェック対象の終了日"),
+    exclude_campaign_id: Optional[UUID] = Query(None, description="除外するキャンペーンID（編集時用）"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    """
+    エリアのキャンペーン割り当て状況を取得する。
+    store_id を指定すると、その店舗のエリアのみ取得する。
+    start_date/end_date を指定すると、その期間と重複するキャンペーンを検出する。
+    """
+    # Get stores (filter by store_id if provided)
+    stores_query = db.query(Store)
+    if store_id:
+        stores_query = stores_query.filter(Store.id == store_id)
+    stores = stores_query.all()
+    store_map = {store.id: store for store in stores}
+
+    # Get areas (filter by store_id if provided)
+    areas_query = db.query(Area)
+    if store_id:
+        areas_query = areas_query.filter(Area.store_id == store_id)
+    areas = areas_query.all()
+
+    # Get all campaign areas with campaign info
+    campaign_areas = db.query(CampaignArea).options(
+        joinedload(CampaignArea.campaign)
+    ).all()
+
+    # Build area_id -> campaigns mapping
+    area_campaigns: dict[UUID, list[Campaign]] = {}
+    for ca in campaign_areas:
+        if ca.area_id not in area_campaigns:
+            area_campaigns[ca.area_id] = []
+        area_campaigns[ca.area_id].append(ca.campaign)
+
+    result_areas = []
+    for area in areas:
+        store = store_map.get(area.store_id)
+        if not store:
+            continue
+
+        campaigns = area_campaigns.get(area.id, [])
+
+        # Filter out excluded campaign
+        if exclude_campaign_id:
+            campaigns = [c for c in campaigns if c.id != exclude_campaign_id]
+
+        # Build campaign info list
+        assigned_campaigns = [
+            CampaignInfo(
+                id=c.id,
+                name=c.name,
+                start_date=c.start_date,
+                end_date=c.end_date,
+                is_active=c.is_active
+            )
+            for c in campaigns
+        ]
+
+        # Find conflicting campaigns (overlapping date range)
+        conflicting_campaigns = []
+        has_conflict = False
+
+        if start_date and end_date:
+            for c in campaigns:
+                # Check date overlap: campaign overlaps if:
+                # campaign.start_date <= query.end_date AND campaign.end_date >= query.start_date
+                if c.start_date <= end_date and c.end_date >= start_date and c.is_active:
+                    has_conflict = True
+                    conflicting_campaigns.append(
+                        CampaignInfo(
+                            id=c.id,
+                            name=c.name,
+                            start_date=c.start_date,
+                            end_date=c.end_date,
+                            is_active=c.is_active
+                        )
+                    )
+
+        result_areas.append(
+            AreaCampaignAssignment(
+                area_id=area.id,
+                area_name=area.name,
+                area_code=area.code,
+                store_id=store.id,
+                store_name=store.name,
+                assigned_campaigns=assigned_campaigns,
+                has_conflict=has_conflict,
+                conflicting_campaigns=conflicting_campaigns
+            )
+        )
+
+    return AreaCampaignAssignmentResponse(areas=result_areas)
 
 
 @router.get("/stores/{store_id}/areas", response_model=List[AreaResponse])

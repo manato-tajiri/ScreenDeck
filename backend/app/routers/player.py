@@ -1,5 +1,4 @@
 import hashlib
-import random
 from typing import List
 from uuid import UUID
 from datetime import datetime, date
@@ -17,22 +16,6 @@ from app.schemas.playback_log import PlaybackLogCreate
 from app.utils.storage import get_file_url
 
 router = APIRouter(prefix="/player", tags=["player"])
-
-
-def weighted_shuffle(items: List[PlaylistItem]) -> List[PlaylistItem]:
-    """Shuffle items while respecting their relative weights."""
-    if not items:
-        return []
-
-    # Create multiple copies based on weight (simplified for MVP)
-    # In production, use more sophisticated weighting
-    expanded = []
-    for item in items:
-        # Each item appears proportional to campaign weight
-        expanded.append(item)
-
-    random.shuffle(expanded)
-    return expanded
 
 
 @router.get("/playlist", response_model=PlaylistResponse)
@@ -68,19 +51,21 @@ async def get_playlist(
     campaign_ids = [ca.campaign_id for ca in campaign_areas]
 
     # Filter to only active campaigns within date range
+    # Sort by weight descending (higher weight = higher priority)
     active_campaigns = db.query(Campaign).filter(
         Campaign.id.in_(campaign_ids),
         Campaign.is_active == True,
         Campaign.start_date <= today,
         Campaign.end_date >= today,
-    ).all()
+    ).order_by(Campaign.weight.desc()).all()
 
-    # Build playlist items
+    # Build playlist items in deterministic order:
+    # - Campaigns sorted by weight (descending)
+    # - Media within each campaign sorted by sort_order (ascending)
     playlist_items = []
-    total_weight = sum(c.weight for c in active_campaigns) or 1
 
     for campaign in active_campaigns:
-        # Get media for this campaign
+        # Get media for this campaign, sorted by sort_order
         media_items = db.query(Media).filter(
             Media.campaign_id == campaign.id
         ).order_by(Media.sort_order).all()
@@ -98,16 +83,14 @@ async def get_playlist(
                 filename=media.filename,
             ))
 
-    # Shuffle based on weights
-    shuffled_items = weighted_shuffle(playlist_items)
-
     # Generate version hash for cache invalidation
-    version_data = f"{area_id}-{datetime.utcnow().isoformat()}"
-    version = hashlib.md5(version_data.encode()).hexdigest()[:8]
+    # Use content-based hash for stable versions when content hasn't changed
+    content_data = "-".join([str(item.media_id) for item in playlist_items])
+    version = hashlib.md5(content_data.encode()).hexdigest()[:8]
 
     return PlaylistResponse(
         version=version,
-        items=shuffled_items,
+        items=playlist_items,
         generated_at=datetime.utcnow(),
     )
 

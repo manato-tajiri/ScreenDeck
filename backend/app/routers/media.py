@@ -8,7 +8,7 @@ from app.database import get_db
 from app.models.campaign import Campaign
 from app.models.media import Media, MediaType
 from app.models.user import User
-from app.schemas.media import MediaUpdate, MediaResponse
+from app.schemas.media import MediaUpdate, MediaResponse, MediaReorderRequest
 from app.dependencies import get_current_admin
 from app.utils.storage import upload_file, get_file_url, delete_file
 
@@ -185,3 +185,55 @@ async def delete_media(
 
     db.delete(media)
     db.commit()
+
+
+@router.put("/campaigns/{campaign_id}/media/reorder", response_model=List[MediaResponse])
+async def reorder_campaign_media(
+    campaign_id: UUID,
+    reorder_data: MediaReorderRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_admin)
+):
+    """
+    メディアの並び順を更新する。
+    media_ids の順序で sort_order を 0, 1, 2... と設定する。
+    """
+    campaign = db.query(Campaign).filter(Campaign.id == campaign_id).first()
+    if not campaign:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Campaign not found",
+        )
+
+    # Validate all media IDs exist and belong to this campaign
+    media_items = db.query(Media).filter(
+        Media.campaign_id == campaign_id,
+        Media.id.in_(reorder_data.media_ids)
+    ).all()
+
+    if len(media_items) != len(reorder_data.media_ids):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="One or more media IDs are invalid or do not belong to this campaign",
+        )
+
+    # Create a map for quick lookup
+    media_map = {m.id: m for m in media_items}
+
+    # Update sort_order based on the order in media_ids
+    for index, media_id in enumerate(reorder_data.media_ids):
+        media = media_map[media_id]
+        media.sort_order = index
+
+    db.commit()
+
+    # Return updated media list in new order
+    updated_media = db.query(Media).filter(
+        Media.campaign_id == campaign_id
+    ).order_by(Media.sort_order).all()
+
+    # Generate fresh URLs
+    for item in updated_media:
+        item.gcs_url = get_file_url(item.gcs_path)
+
+    return updated_media

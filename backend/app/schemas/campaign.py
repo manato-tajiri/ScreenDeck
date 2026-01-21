@@ -13,7 +13,7 @@ class CampaignBase(BaseModel):
 
 
 class CampaignCreate(CampaignBase):
-    pass
+    store_id: UUID
 
 
 class CampaignUpdate(BaseModel):
@@ -27,6 +27,7 @@ class CampaignUpdate(BaseModel):
 
 class CampaignResponse(CampaignBase):
     id: UUID
+    store_id: UUID
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -37,3 +38,34 @@ class CampaignResponse(CampaignBase):
 
 class CampaignAreaUpdate(BaseModel):
     area_ids: List[UUID]
+
+
+# Conflict check schemas
+class CampaignConflictCheckRequest(BaseModel):
+    area_ids: List[UUID]
+    start_date: date
+    end_date: date
+    exclude_campaign_id: Optional[UUID] = None
+
+
+class CampaignConflictInfo(BaseModel):
+    id: UUID
+    name: str
+    start_date: date
+    end_date: date
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
+class CampaignConflict(BaseModel):
+    area_id: UUID
+    area_name: str
+    store_name: str
+    conflicting_campaign: CampaignConflictInfo
+
+
+class CampaignConflictCheckResponse(BaseModel):
+    has_conflicts: bool
+    conflicts: List[CampaignConflict]

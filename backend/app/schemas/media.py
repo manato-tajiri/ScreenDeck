@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 
 from app.models.media import MediaType
 
@@ -38,3 +38,8 @@ class MediaResponse(MediaBase):
 
     class Config:
         from_attributes = True
+
+
+class MediaReorderRequest(BaseModel):
+    """メディアの並び順更新リクエスト"""
+    media_ids: List[UUID]

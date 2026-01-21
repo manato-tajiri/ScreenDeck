@@ -19,4 +19,5 @@ class Store(Base):
 
     # Relationships
     areas = relationship("Area", back_populates="store", cascade="all, delete-orphan")
+    campaigns = relationship("Campaign", back_populates="store", cascade="all, delete-orphan")
     staff = relationship("User", back_populates="store")

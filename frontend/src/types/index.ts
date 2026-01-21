@@ -101,6 +101,7 @@ export interface DeviceUpdate {
 // Campaign types
 export interface Campaign {
   id: string;
+  store_id: string;
   name: string;
   description: string | null;
   weight: number;
@@ -112,6 +113,7 @@ export interface Campaign {
 }
 
 export interface CampaignCreate {
+  store_id: string;
   name: string;
   description?: string;
   weight: number;
@@ -215,4 +217,48 @@ export interface ReportSummary {
     total_devices: number;
     total_campaigns: number;
   };
+}
+
+// Area campaign assignment types
+export interface CampaignInfo {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+}
+
+export interface AreaCampaignAssignment {
+  area_id: string;
+  area_name: string;
+  area_code: string;
+  store_id: string;
+  store_name: string;
+  assigned_campaigns: CampaignInfo[];
+  has_conflict: boolean;
+  conflicting_campaigns: CampaignInfo[];
+}
+
+export interface AreaCampaignAssignmentResponse {
+  areas: AreaCampaignAssignment[];
+}
+
+// Campaign conflict check types
+export interface CampaignConflict {
+  area_id: string;
+  area_name: string;
+  store_name: string;
+  conflicting_campaign: CampaignInfo;
+}
+
+export interface CampaignConflictCheckRequest {
+  area_ids: string[];
+  start_date: string;
+  end_date: string;
+  exclude_campaign_id?: string;
+}
+
+export interface CampaignConflictCheckResponse {
+  has_conflicts: boolean;
+  conflicts: CampaignConflict[];
 }
